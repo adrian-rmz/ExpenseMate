@@ -12,7 +12,7 @@ struct Transaction: Identifiable {
     let type: String
     let amount: Double
     let category: String
-    let date: Date
+    let date: Date = Date()
 }
 
 class ExpenseManager: ObservableObject {
@@ -21,8 +21,8 @@ class ExpenseManager: ObservableObject {
     func addTransaction(expense: Expense) {
         let transaction = Transaction(type: expense.type,
                                       amount: expense.amount,
-                                      category: expense.category,
-                                      date: Date())
+                                      category: expense.category)
         transactions.append(transaction)
     }
 }
+

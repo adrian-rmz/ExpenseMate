@@ -15,46 +15,89 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
-                List {
-                    ForEach(expenseManager.transactions) { transaction in
+                ScrollView(showsIndicators: false) {
+                    // Summary Section
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack {
-                            Text(transaction.category.capitalized)
-                            Spacer()
-                            Text(String(format: "%.2f", transaction.amount))
-                                .foregroundColor(transaction.type == "Expense" ? .red : .green)
+                            SummaryCard(
+                                title: "Income",
+                                amount: calculateTotal(type: "Income"),
+                                color: .green
+                            )
+                            SummaryCard(
+                                title: "Expenses",
+                                amount: calculateTotal(type: "Expense"),
+                                color: .red
+                            )
                         }
+                        .padding(.horizontal)
                     }
+                    .padding(.vertical)
+
+                    // Transactions Section
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Transactions")
+                            .font(.title2)
+                            .bold()
+                            .padding(.horizontal)
+
+                        VStack(spacing: 10) {
+                            ForEach(expenseManager.transactions) { transaction in
+                                TransactionCard(transaction: transaction)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical)
                 }
 
-                Spacer()
-
-                Text(speechRecognizer.transcribedText)
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(10)
-
-                Button(action: {
-                    if isRecording {
-                        speechRecognizer.stopRecording()
-                        let transactions = analyzeExpenses(speechRecognizer.transcribedText)
-                        for expense in transactions {
-                            expenseManager.addTransaction(expense: expense)
-                        }
-                    } else {
-                        speechRecognizer.startRecording()
-                    }
-                    isRecording.toggle()
-                }) {
-                    Text(isRecording ? "Stop Recording" : "Start Recording")
+                // Fixed Voice Input Section
+                HStack(spacing: 10) {
+                    Text(speechRecognizer.transcribedText.isEmpty ? "Speak your transaction..." : speechRecognizer.transcribedText)
+                        .foregroundColor(.gray)
                         .padding()
-                        .background(isRecording ? Color.red : Color.blue)
-                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(UIColor.secondarySystemBackground))
                         .cornerRadius(10)
+
+                    Button(action: {
+                        if isRecording {
+                            speechRecognizer.stopRecording()
+                            let transactions = analyzeExpenses(speechRecognizer.transcribedText)
+                            for transaction in transactions {
+                                expenseManager.addTransaction(expense: transaction)
+                            }
+                        } else {
+                            speechRecognizer.startRecording()
+                        }
+                        isRecording.toggle()
+                    }) {
+                        Image(systemName: isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(isRecording ? .red : .blue)
+                    }
+                }
+                .padding()
+                .background(Color(UIColor.systemBackground).shadow(radius: 5))
+            }
+            .navigationTitle("ExpenseMate")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: ChartsView(transactions: expenseManager.transactions)) {
+                        Image(systemName: "chart.pie.fill")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                    }
                 }
             }
-            .padding()
-            .navigationTitle("VoiceExpense")
         }
+    }
+
+    private func calculateTotal(type: String) -> Double {
+        return expenseManager.transactions
+            .filter { $0.type == type }
+            .map { $0.amount }
+            .reduce(0, +)
     }
 }
 
