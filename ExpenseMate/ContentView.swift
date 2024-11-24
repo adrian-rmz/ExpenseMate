@@ -36,7 +36,7 @@ struct ContentView: View {
                 Button(action: {
                     if isRecording {
                         speechRecognizer.stopRecording()
-                        let transactions = analyzeMultipleExpenses(speechRecognizer.transcribedText)
+                        let transactions = analyzeExpenses(speechRecognizer.transcribedText)
                         for expense in transactions {
                             expenseManager.addTransaction(expense: expense)
                         }
